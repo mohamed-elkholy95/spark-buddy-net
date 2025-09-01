@@ -1,7 +1,7 @@
 import { MessageCircle, Plus, Bot, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import snakeMascot from "@/assets/snake-mascot.jpg";
+import snakeMascot from "@/assets/professional-snake.jpg";
 
 export const Header = () => {
   return (
@@ -10,11 +10,11 @@ export const Header = () => {
         <div className="flex items-center gap-3">
           <img 
             src={snakeMascot} 
-            alt="Python Community Snake Mascot" 
+            alt="PyThoughts Professional Snake Mascot" 
             className="h-8 w-8 rounded-full snake-wiggle"
           />
           <h1 className="text-xl font-bold gradient-python bg-clip-text text-transparent">
-            PyConnect
+            PyThoughts
           </h1>
         </div>
 
@@ -22,7 +22,7 @@ export const Header = () => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search posts, users, or get AI help..."
+              placeholder="Search posts, users, or get Viper's help..."
               className="pl-9 bg-muted/50 border-muted"
             />
           </div>

@@ -2,7 +2,7 @@ import { Heart, MessageCircle, Share, MoreVertical } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import snakeMascot from "@/assets/snake-mascot.jpg";
+import snakeMascot from "@/assets/professional-snake.jpg";
 
 interface PostCardProps {
   author: string;
@@ -48,7 +48,7 @@ export const PostCard = ({
       </CardHeader>
       
       <CardContent className="space-y-3">
-        <p className="text-sm leading-relaxed">{content}</p>
+        <p className="text-sm leading-relaxed">&gt;_ {content} &lt;</p>
         
         {code && (
           <div className="bg-muted/50 rounded-lg p-3 border-l-4 border-primary">

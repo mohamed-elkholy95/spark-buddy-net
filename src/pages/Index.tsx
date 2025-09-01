@@ -14,7 +14,7 @@ const Index = () => {
           <div className="flex flex-col lg:flex-row items-center gap-8">
             <div className="flex-1 text-center lg:text-left">
               <h1 className="text-4xl lg:text-6xl font-bold text-primary-foreground mb-4 bounce-in">
-                Welcome to PyConnect
+                Welcome to PyThoughts
               </h1>
               <p className="text-lg lg:text-xl text-primary-foreground/90 mb-6">
                 The friendliest Python community platform with AI-powered assistance, 

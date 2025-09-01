@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import snakeMascot from "@/assets/snake-mascot.jpg";
+import snakeMascot from "@/assets/professional-snake.jpg";
 
 interface ChatMessage {
   id: string;
@@ -19,8 +19,8 @@ interface ChatMessage {
 const sampleMessages: ChatMessage[] = [
   {
     id: "1",
-    sender: "AI Assistant",
-    content: "Hello! I'm here to help with your Python questions. What are you working on today?",
+    sender: "Viper",
+    content: "Hello! I'm Viper, your AI assistant. I'm here to help with your Python questions. What are you working on today?",
     time: "10:30 AM",
     isAI: true
   },
@@ -32,7 +32,7 @@ const sampleMessages: ChatMessage[] = [
   },
   {
     id: "3",
-    sender: "AI Assistant",
+    sender: "Viper",
     content: "Absolutely! Async/await is great for I/O operations. What specific challenge are you facing?",
     time: "10:32 AM",
     isAI: true
@@ -66,7 +66,7 @@ export const ChatSidebar = () => {
             className="flex-1 gap-2"
           >
             <Bot className="h-4 w-4" />
-            AI Helper
+            Viper
           </Button>
           <Button
             variant={activeTab === "community" ? "default" : "ghost"}
@@ -116,7 +116,7 @@ export const ChatSidebar = () => {
             {activeTab === "ai" && (
               <div className="text-center py-4">
                 <Badge variant="secondary" className="bg-accent/10 text-accent border-accent/30">
-                  AI Assistant is online and ready to help! 🐍
+                  Viper is online and ready to help! 🐍
                 </Badge>
               </div>
             )}
@@ -127,7 +127,7 @@ export const ChatSidebar = () => {
           <Input
             placeholder={
               activeTab === "ai" 
-                ? "Ask the AI assistant..." 
+                ? "Ask Viper..." 
                 : "Message the community..."
             }
             value={message}
