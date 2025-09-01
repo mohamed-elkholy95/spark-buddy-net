@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { api } from './api'
 
 // Mock fetch globally
-global.fetch = vi.fn()
+const mockFetch = vi.fn()
+global.fetch = mockFetch
 
 describe('API Client', () => {
   beforeEach(() => {
@@ -24,7 +25,7 @@ describe('API Client', () => {
         },
       ]
 
-      vi.mocked(fetch).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         json: () => Promise.resolve(mockPosts),
       } as Response)
@@ -38,7 +39,7 @@ describe('API Client', () => {
     })
 
     it('throws error when API fails', async () => {
-      vi.mocked(fetch).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: false,
         status: 500,
         text: () => Promise.resolve('Internal Server Error'),
@@ -63,7 +64,7 @@ describe('API Client', () => {
         _count: { likes: 0, comments: 0 },
       }
 
-      vi.mocked(fetch).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         json: () => Promise.resolve(mockResponse),
       } as Response)
@@ -83,7 +84,7 @@ describe('API Client', () => {
     it('likes a post successfully', async () => {
       const mockResponse = { liked: true }
 
-      vi.mocked(fetch).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         json: () => Promise.resolve(mockResponse),
       } as Response)
@@ -105,7 +106,7 @@ describe('API Client', () => {
         timestamp: '2024-01-01T10:00:00Z',
       }
 
-      vi.mocked(fetch).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         json: () => Promise.resolve(mockResponse),
       } as Response)
@@ -134,7 +135,7 @@ describe('API Client', () => {
         timestamp: '2024-01-01T10:00:00Z',
       }
 
-      vi.mocked(fetch).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         json: () => Promise.resolve(mockResponse),
       } as Response)
@@ -163,7 +164,7 @@ describe('API Client', () => {
         timestamp: '2024-01-01T10:00:00Z',
       }
 
-      vi.mocked(fetch).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         json: () => Promise.resolve(mockResponse),
       } as Response)
@@ -192,7 +193,7 @@ describe('API Client', () => {
         userId: 'demo-user',
       }
 
-      vi.mocked(fetch).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         json: () => Promise.resolve(mockResponse),
       } as Response)
@@ -209,13 +210,13 @@ describe('API Client', () => {
 
   describe('error handling', () => {
     it('handles network errors', async () => {
-      vi.mocked(fetch).mockRejectedValue(new Error('Network error'))
+      mockFetch.mockRejectedValue(new Error('Network error'))
 
       await expect(api.getPosts()).rejects.toThrow('Network error')
     })
 
     it('handles non-JSON responses', async () => {
-      vi.mocked(fetch).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: false,
         status: 404,
         text: () => Promise.resolve('Not Found'),

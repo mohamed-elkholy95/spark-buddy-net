@@ -82,6 +82,24 @@ export const handlers = [
     })
   }),
 
+  // Generate code endpoint
+  http.post('http://localhost:3001/api/ai/generate-code', async ({ request }) => {
+    const body = await request.json() as { description: string; language: string }
+    return HttpResponse.json({
+      code: `# Generated code for: ${body.description}\nprint("Hello World!")`,
+      isDemo: true,
+      timestamp: new Date().toISOString()
+    })
+  }),
+
+  // Auth session endpoint
+  http.get('http://localhost:3001/api/auth/get-session', () => {
+    return HttpResponse.json({
+      user: null,
+      session: null
+    })
+  }),
+
   // Demo data endpoint
   http.post('http://localhost:3001/api/demo/seed', () => {
     return HttpResponse.json({
