@@ -32,6 +32,24 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
   disconnect: vi.fn(),
 }))
 
+// Mock hasPointerCapture for Radix UI compatibility
+Object.defineProperty(HTMLElement.prototype, 'hasPointerCapture', {
+  writable: true,
+  value: vi.fn().mockReturnValue(false),
+})
+
+// Mock setPointerCapture for Radix UI compatibility
+Object.defineProperty(HTMLElement.prototype, 'setPointerCapture', {
+  writable: true,
+  value: vi.fn(),
+})
+
+// Mock releasePointerCapture for Radix UI compatibility
+Object.defineProperty(HTMLElement.prototype, 'releasePointerCapture', {
+  writable: true,
+  value: vi.fn(),
+})
+
 // Start server before all tests
 beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }))
 

@@ -88,7 +88,7 @@ export const PostCard = ({
             <Avatar className="h-10 w-10 ring-2 ring-python-blue/20">
               <AvatarImage src={avatar || snakeMascot} alt={author} />
               <AvatarFallback className="bg-gradient-to-r from-python-blue to-python-blue/80 text-white">
-                {author[0]}
+                {author?.[0] || 'U'}
               </AvatarFallback>
             </Avatar>
             <div>
