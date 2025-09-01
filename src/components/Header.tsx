@@ -8,7 +8,7 @@ import { useSession, signOut } from "@/lib/auth-client";
 import snakeMascot from "@/assets/professional-snake.jpg";
 
 export const Header = () => {
-  const { data: session, isLoading } = useSession();
+  const { data: session, isPending } = useSession();
 
   const handleSignOut = async () => {
     try {

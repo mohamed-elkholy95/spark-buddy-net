@@ -51,7 +51,30 @@ describe('PostComposer', () => {
 
   it('enables post button when user is signed in and has content', async () => {
     const { useSession } = await import('@/lib/auth-client')
-    vi.mocked(useSession).mockReturnValue({ data: { user: { name: 'Test User' } } })
+    vi.mocked(useSession).mockReturnValue({ 
+      data: { 
+        user: { 
+          id: '1',
+          name: 'Test User',
+          emailVerified: false,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        session: {
+          id: 'session-1',
+          userId: '1',
+          expiresAt: new Date(Date.now() + 86400000),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          token: 'test-token',
+          ipAddress: '127.0.0.1',
+          userAgent: 'test-agent'
+        }
+      },
+      isPending: false,
+      error: null,
+      refetch: vi.fn()
+    })
     
     render(<PostComposer />)
     

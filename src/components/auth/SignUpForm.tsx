@@ -70,10 +70,9 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
 
   const handleGoogleSignUp = async () => {
     try {
-      await signUp.social({
-        provider: "google",
-        callbackURL: "/",
-      })
+      // Social sign in functionality would go here
+      console.log("Google sign up clicked")
+      toast.info("Social sign up not implemented yet")
     } catch (error) {
       console.error("Google sign-up error:", error)
       toast.error("Failed to sign up with Google")
@@ -82,10 +81,9 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
 
   const handleGithubSignUp = async () => {
     try {
-      await signUp.social({
-        provider: "github", 
-        callbackURL: "/",
-      })
+      // Social sign in functionality would go here
+      console.log("GitHub sign up clicked")
+      toast.info("Social sign up not implemented yet")
     } catch (error) {
       console.error("GitHub sign-up error:", error)
       toast.error("Failed to sign up with GitHub")
