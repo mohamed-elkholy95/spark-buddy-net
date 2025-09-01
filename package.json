@@ -17,7 +17,9 @@
     "test:coverage": "vitest run --coverage",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "diagnose": "bash scripts/diagnose.sh",
+    "diagnose:full": "bash scripts/diagnose.sh full"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

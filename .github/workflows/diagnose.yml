@@ -1,0 +1,357 @@
+name: Repository Diagnostics
+
+on:
+  workflow_dispatch:
+    inputs:
+      diagnostic_level:
+        description: 'Diagnostic level (basic, full, deep)'
+        required: false
+        default: 'basic'
+        type: choice
+        options:
+        - basic
+        - full
+        - deep
+  push:
+    branches: [ main, develop ]
+    paths: 
+      - '.github/workflows/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - 'vite.config.ts'
+  pull_request:
+    branches: [ main ]
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  system-diagnostics:
+    name: System Health Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: System Information
+        run: |
+          echo "🔍 SYSTEM DIAGNOSTICS REPORT"
+          echo "============================="
+          echo "📅 Date: $(date)"
+          echo "🖥️  OS: $(uname -a)"
+          echo "📦 Node.js: $(node --version)"
+          echo "📦 npm: $(npm --version)"
+          echo "🔄 Git commit: ${{ github.sha }}"
+          echo "🌿 Branch: ${{ github.ref_name }}"
+          echo "👤 Actor: ${{ github.actor }}"
+          echo
+
+      - name: Repository Structure Analysis
+        run: |
+          echo "📁 REPOSITORY STRUCTURE"
+          echo "======================="
+          echo "📊 Total files: $(find . -type f | wc -l)"
+          echo "📊 Directory count: $(find . -type d | wc -l)"
+          echo "📊 Code files: $(find . -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" | wc -l)"
+          echo "📊 Test files: $(find . -name "*.test.*" -o -name "*.spec.*" | wc -l)"
+          echo "📊 Config files: $(find . -name "*.config.*" -o -name "*.json" | wc -l)"
+          echo
+          echo "📂 Directory structure:"
+          tree -L 3 -I node_modules || ls -la
+          echo
+
+      - name: Package Dependencies Analysis
+        run: |
+          echo "📦 DEPENDENCY ANALYSIS"
+          echo "====================="
+          
+          if [ -f package.json ]; then
+            echo "✅ package.json found"
+            echo "📊 Dependencies: $(jq '.dependencies | length' package.json)"
+            echo "📊 DevDependencies: $(jq '.devDependencies | length' package.json)"
+            echo "📊 Scripts: $(jq '.scripts | length' package.json)"
+            echo
+            echo "🔧 Available scripts:"
+            jq -r '.scripts | keys[]' package.json | sed 's/^/  - /'
+            echo
+          else
+            echo "❌ package.json not found"
+          fi
+
+          if [ -f package-lock.json ]; then
+            echo "✅ package-lock.json found"
+            echo "📊 Locked packages: $(jq '.packages | length' package-lock.json)"
+          else
+            echo "⚠️  package-lock.json not found"
+          fi
+
+      - name: Install dependencies (if needed)
+        run: |
+          echo "📥 DEPENDENCY INSTALLATION"
+          echo "=========================="
+          
+          if [ -f package.json ]; then
+            echo "🔄 Installing dependencies..."
+            npm ci --prefer-offline --no-audit --progress=false
+            echo "✅ Dependencies installed successfully"
+          else
+            echo "❌ Cannot install dependencies - package.json missing"
+            exit 1
+          fi
+
+      - name: Configuration Files Check
+        run: |
+          echo "⚙️  CONFIGURATION ANALYSIS"
+          echo "========================="
+          
+          configs=("tsconfig.json" "vite.config.ts" "tailwind.config.ts" "eslint.config.js" "vitest.config.ts" ".env.example" "docker-compose.yml" "Dockerfile" "nginx.conf")
+          
+          for config in "${configs[@]}"; do
+            if [ -f "$config" ]; then
+              echo "✅ $config"
+            else
+              echo "❌ $config (missing)"
+            fi
+          done
+          echo
+
+      - name: Code Quality Diagnostics
+        run: |
+          echo "🔍 CODE QUALITY DIAGNOSTICS"
+          echo "==========================="
+          
+          echo "📏 Running linter..."
+          if npm run lint 2>&1; then
+            echo "✅ Linting passed"
+          else
+            echo "❌ Linting issues found"
+          fi
+          echo
+          
+          echo "🔍 Running type check..."
+          if npx tsc --noEmit 2>&1; then
+            echo "✅ Type checking passed"
+          else
+            echo "❌ Type errors found"
+          fi
+          echo
+
+      - name: Test Environment Diagnostics
+        run: |
+          echo "🧪 TEST ENVIRONMENT DIAGNOSTICS"
+          echo "==============================="
+          
+          echo "🔍 Checking test configuration..."
+          if [ -f "vitest.config.ts" ]; then
+            echo "✅ Vitest config found"
+          else
+            echo "❌ Vitest config missing"
+          fi
+          
+          if [ -d "src/test" ]; then
+            echo "✅ Test directory found"
+            echo "📊 Test setup files: $(find src/test -name "*.ts" | wc -l)"
+          else
+            echo "⚠️  No test directory found"
+          fi
+          
+          echo "📊 Test files: $(find . -name "*.test.*" -o -name "*.spec.*" | wc -l)"
+          echo
+          
+          echo "🏃 Running tests..."
+          if npm run test:run 2>&1; then
+            echo "✅ Tests passed"
+          else
+            echo "❌ Test failures detected"
+          fi
+
+      - name: Security Diagnostics
+        run: |
+          echo "🔒 SECURITY DIAGNOSTICS"
+          echo "======================="
+          
+          echo "🔍 Running security audit..."
+          npm audit --audit-level=moderate || echo "⚠️  Security vulnerabilities found"
+          echo
+          
+          echo "🔍 Checking for sensitive files..."
+          sensitive_files=(".env" "*.key" "*.pem" "config/secrets.json")
+          found_sensitive=false
+          
+          for pattern in "${sensitive_files[@]}"; do
+            if find . -name "$pattern" -not -path "./node_modules/*" | grep -q .; then
+              echo "⚠️  Found sensitive file pattern: $pattern"
+              found_sensitive=true
+            fi
+          done
+          
+          if [ "$found_sensitive" = false ]; then
+            echo "✅ No sensitive files found in repository"
+          fi
+
+      - name: Database Diagnostics
+        run: |
+          echo "🗄️  DATABASE DIAGNOSTICS"
+          echo "======================="
+          
+          if [ -f "prisma/schema.prisma" ]; then
+            echo "✅ Prisma schema found"
+            echo "📊 Models count: $(grep -c "^model " prisma/schema.prisma || echo "0")"
+            echo "📊 Migrations: $(find prisma/migrations -name "*.sql" 2>/dev/null | wc -l || echo "0")"
+            
+            echo "🔍 Checking Prisma client..."
+            if npx prisma generate 2>&1; then
+              echo "✅ Prisma client generation successful"
+            else
+              echo "❌ Prisma client generation failed"
+            fi
+          else
+            echo "⚠️  No Prisma schema found"
+          fi
+
+      - name: Build System Diagnostics  
+        run: |
+          echo "🏗️  BUILD SYSTEM DIAGNOSTICS"
+          echo "==========================="
+          
+          echo "🔍 Testing build process..."
+          if npm run build 2>&1; then
+            echo "✅ Build successful"
+            
+            if [ -d "dist" ]; then
+              echo "📊 Build output size: $(du -sh dist | cut -f1)"
+              echo "📊 Build files: $(find dist -type f | wc -l)"
+            fi
+          else
+            echo "❌ Build failed"
+          fi
+
+      - name: Docker Diagnostics
+        if: github.event.inputs.diagnostic_level == 'full' || github.event.inputs.diagnostic_level == 'deep'
+        run: |
+          echo "🐳 DOCKER DIAGNOSTICS"
+          echo "====================="
+          
+          if [ -f "Dockerfile" ]; then
+            echo "✅ Dockerfile found"
+            echo "🔍 Dockerfile validation..."
+            
+            # Basic Dockerfile validation
+            if grep -q "FROM" Dockerfile; then
+              echo "✅ Base image specified"
+            else
+              echo "❌ No base image found"
+            fi
+            
+            if grep -q "WORKDIR" Dockerfile; then
+              echo "✅ Working directory set"
+            else
+              echo "⚠️  No working directory specified"
+            fi
+            
+            if grep -q "EXPOSE" Dockerfile; then
+              echo "✅ Port exposed"
+            else
+              echo "⚠️  No port exposed"
+            fi
+          else
+            echo "⚠️  No Dockerfile found"
+          fi
+          
+          if [ -f "docker-compose.yml" ]; then
+            echo "✅ Docker Compose configuration found"
+          else
+            echo "⚠️  No Docker Compose configuration"
+          fi
+
+      - name: Performance Diagnostics
+        if: github.event.inputs.diagnostic_level == 'deep'
+        run: |
+          echo "⚡ PERFORMANCE DIAGNOSTICS"
+          echo "========================="
+          
+          echo "📊 Bundle size analysis..."
+          if [ -d "dist" ]; then
+            echo "🔍 Analyzing build output..."
+            find dist -name "*.js" -exec wc -c {} + | sort -n
+            echo
+            echo "📊 Largest files:"
+            find dist -type f -exec du -h {} + | sort -rh | head -10
+          else
+            echo "⚠️  No build output found for analysis"
+          fi
+
+      - name: Generate Diagnostic Report
+        run: |
+          echo "📋 DIAGNOSTIC SUMMARY"
+          echo "===================="
+          echo "✅ System diagnostics completed"
+          echo "📅 Report generated: $(date)"
+          echo "🔄 Commit: ${{ github.sha }}"
+          echo "🌿 Branch: ${{ github.ref_name }}"
+          echo
+          echo "🔍 Check individual steps above for detailed analysis"
+          echo "💡 To run full diagnostics: workflow_dispatch with 'full' or 'deep' level"
+
+      - name: Upload Diagnostic Artifacts
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: diagnostic-report-${{ github.sha }}
+          path: |
+            package.json
+            package-lock.json
+            tsconfig.json
+            vite.config.ts
+            vitest.config.ts
+            .github/workflows/
+          retention-days: 7
+
+  dependency-vulnerabilities:
+    name: Dependency Security Check
+    runs-on: ubuntu-latest
+    if: github.event.inputs.diagnostic_level == 'full' || github.event.inputs.diagnostic_level == 'deep'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run comprehensive security audit
+        run: |
+          echo "🔒 COMPREHENSIVE SECURITY AUDIT"
+          echo "==============================="
+          
+          echo "📋 Full audit report:"
+          npm audit --json > audit.json || true
+          
+          echo "🔍 High/Critical vulnerabilities:"
+          npm audit --audit-level=high --json | jq '.vulnerabilities' || echo "No high/critical issues"
+          
+          echo "📊 Audit summary:"
+          npm audit || echo "Issues found - check details above"
+
+      - name: Upload Security Report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-audit-${{ github.sha }}
+          path: audit.json
+          retention-days: 14
