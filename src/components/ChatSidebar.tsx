@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { MessageCircle, Send, Bot, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { useSession } from "@/lib/auth-client";
 import snakeMascot from "@/assets/professional-snake.jpg";
 
 interface ChatMessage {
@@ -14,6 +16,7 @@ interface ChatMessage {
   content: string;
   time: string;
   isAI?: boolean;
+  isLoading?: boolean;
 }
 
 const sampleMessages: ChatMessage[] = [
@@ -40,14 +43,117 @@ const sampleMessages: ChatMessage[] = [
 ];
 
 export const ChatSidebar = () => {
+  const { data: session } = useSession();
   const [message, setMessage] = useState("");
-  const [messages] = useState<ChatMessage[]>(sampleMessages);
+  const [messages, setMessages] = useState<ChatMessage[]>(sampleMessages);
   const [activeTab, setActiveTab] = useState<"ai" | "community">("ai");
+  const [isLoading, setIsLoading] = useState(false);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  const handleSendMessage = () => {
-    if (message.trim()) {
-      // Handle message sending logic here
-      setMessage("");
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      const scrollElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollElement) {
+        scrollElement.scrollTop = scrollElement.scrollHeight;
+      }
+    }
+  }, [messages]);
+
+  const handleSendMessage = async () => {
+    if (!message.trim()) return;
+
+    if (!session && activeTab === "ai") {
+      toast.error("Please sign in to chat with Viper");
+      return;
+    }
+
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      sender: "You",
+      content: message.trim(),
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    // Add user message
+    setMessages(prev => [...prev, userMessage]);
+    setMessage("");
+
+    if (activeTab === "ai") {
+      // Add loading message
+      const loadingMessage: ChatMessage = {
+        id: `loading-${Date.now()}`,
+        sender: "Viper",
+        content: "Viper is thinking...",
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isAI: true,
+        isLoading: true,
+      };
+
+      setMessages(prev => [...prev, loadingMessage]);
+      setIsLoading(true);
+
+      try {
+        const response = await fetch('http://localhost:3001/api/ai/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: userMessage.content,
+            conversationHistory: messages
+              .filter(msg => !msg.isLoading)
+              .map(msg => ({
+                role: msg.isAI ? 'assistant' : 'user',
+                content: msg.content
+              }))
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Replace loading message with actual response
+        setMessages(prev => prev.map(msg => 
+          msg.id === loadingMessage.id 
+            ? {
+                ...msg,
+                content: data.response,
+                isLoading: false,
+                id: `ai-${Date.now()}`
+              }
+            : msg
+        ));
+
+        if (data.isDemo) {
+          toast.info("Demo mode - Add DEEPSEEK_API_KEY for real AI responses!");
+        }
+
+      } catch (error) {
+        console.error('Chat error:', error);
+        
+        // Replace loading message with error message
+        setMessages(prev => prev.map(msg => 
+          msg.id === loadingMessage.id 
+            ? {
+                ...msg,
+                content: "Sorry, I encountered an error. Please try again later.",
+                isLoading: false,
+                id: `error-${Date.now()}`
+              }
+            : msg
+        ));
+
+        toast.error("Failed to get AI response");
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      // Community chat - placeholder for now
+      toast.info("Community chat coming soon!");
     }
   };
 
@@ -81,7 +187,7 @@ export const ChatSidebar = () => {
       </CardHeader>
 
       <CardContent className="flex-1 flex flex-col gap-4 px-4">
-        <ScrollArea className="flex-1 pr-4">
+        <ScrollArea className="flex-1 pr-4" ref={scrollAreaRef}>
           <div className="space-y-3">
             {messages.map((msg) => (
               <div
@@ -98,13 +204,20 @@ export const ChatSidebar = () => {
                   <div
                     className={`rounded-lg p-3 text-sm ${
                       msg.sender === "You"
-                        ? "bg-primary text-primary-foreground ml-auto"
+                        ? "bg-gradient-to-r from-python-blue to-python-blue/80 text-white ml-auto"
                         : msg.isAI
-                        ? "bg-accent/20 text-accent-foreground border border-accent/30"
+                        ? "bg-gradient-to-r from-secondary to-secondary/80 border border-python-blue/20"
                         : "bg-muted"
                     }`}
                   >
-                    {msg.content}
+                    {msg.isLoading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin h-3 w-3 border border-current border-r-transparent rounded-full" />
+                        <span className="text-muted-foreground">Viper is thinking...</span>
+                      </div>
+                    ) : (
+                      <div className="whitespace-pre-wrap">{msg.content}</div>
+                    )}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1 px-1">
                     {msg.time}
@@ -115,8 +228,8 @@ export const ChatSidebar = () => {
             
             {activeTab === "ai" && (
               <div className="text-center py-4">
-                <Badge variant="secondary" className="bg-accent/10 text-accent border-accent/30">
-                  Viper is online and ready to help! 🐍
+                <Badge variant="secondary" className="bg-python-blue/10 text-python-blue border-python-blue/30">
+                  {session ? "Viper is online and ready to help! 🐍" : "Sign in to chat with Viper 🔒"}
                 </Badge>
               </div>
             )}
@@ -137,9 +250,9 @@ export const ChatSidebar = () => {
           />
           <Button
             onClick={handleSendMessage}
-            disabled={!message.trim()}
+            disabled={!message.trim() || isLoading || (!session && activeTab === "ai")}
             size="icon"
-            className="bg-gradient-python text-primary-foreground python-glow"
+            className="bg-gradient-to-r from-python-blue to-python-blue/80 hover:from-python-blue/90 hover:to-python-blue/70 text-white"
           >
             <Send className="h-4 w-4" />
           </Button>
