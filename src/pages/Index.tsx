@@ -1,7 +1,7 @@
 import { Header } from "@/components/Header";
 import { Feed } from "@/components/Feed";
 import { ChatSidebar } from "@/components/ChatSidebar";
-import heroImage from "@/assets/python-hero.jpg";
+import heroImage from "@/assets/professional-snake.jpg";
 
 const Index = () => {
   return (
@@ -24,7 +24,7 @@ const Index = () => {
             <div className="flex-1 max-w-md lg:max-w-lg">
               <img 
                 src={heroImage} 
-                alt="Python Community Hero" 
+                alt="PyThoughts Professional Snake Mascot" 
                 className="w-full h-auto rounded-xl shadow-2xl python-glow"
               />
             </div>

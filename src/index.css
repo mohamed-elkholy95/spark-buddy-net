@@ -8,69 +8,69 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Python-inspired design system */
-    --background: 220 20% 97%;
-    --foreground: 220 15% 15%;
+    /* Python-inspired design system - Darker Theme */
+    --background: 220 20% 8%;
+    --foreground: 220 15% 90%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 15% 15%;
+    --card: 220 15% 12%;
+    --card-foreground: 220 15% 88%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 15% 15%;
+    --popover: 220 15% 12%;
+    --popover-foreground: 220 15% 88%;
 
-    /* Python Blue Theme */
-    --primary: 210 76% 41%;
+    /* Python Blue Theme - Darker */
+    --primary: 210 76% 35%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 210 76% 55%;
+    --primary-glow: 210 76% 45%;
 
-    /* Python Gold Accent */
-    --secondary: 48 100% 63%;
+    /* Python Gold Accent - Darker */
+    --secondary: 48 90% 55%;
     --secondary-foreground: 220 15% 15%;
 
-    /* Snake Green */
-    --accent: 142 71% 45%;
+    /* Snake Green - Darker */
+    --accent: 142 71% 38%;
     --accent-foreground: 0 0% 100%;
 
-    --muted: 220 13% 91%;
-    --muted-foreground: 220 9% 46%;
+    --muted: 220 13% 15%;
+    --muted-foreground: 220 9% 65%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 84% 50%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 210 76% 41%;
+    --border: 220 13% 18%;
+    --input: 220 13% 18%;
+    --ring: 210 76% 35%;
 
     --radius: 0.5rem;
 
-    /* Python-themed gradients */
-    --gradient-python: linear-gradient(135deg, hsl(210 76% 41%), hsl(48 100% 63%));
-    --gradient-snake: linear-gradient(90deg, hsl(142 71% 45%), hsl(210 76% 55%));
-    --gradient-hero: linear-gradient(135deg, hsl(210 76% 41%), hsl(210 76% 55%), hsl(48 100% 63%));
+    /* Python-themed gradients - Darker */
+    --gradient-python: linear-gradient(135deg, hsl(210 76% 35%), hsl(48 90% 55%));
+    --gradient-snake: linear-gradient(90deg, hsl(142 71% 38%), hsl(210 76% 45%));
+    --gradient-hero: linear-gradient(135deg, hsl(210 76% 25%), hsl(210 76% 35%), hsl(48 90% 45%));
     
-    /* Shadows */
-    --shadow-glow: 0 10px 30px -10px hsl(210 76% 41% / 0.3);
-    --shadow-snake: 0 8px 25px -8px hsl(142 71% 45% / 0.4);
+    /* Shadows - Enhanced for dark theme */
+    --shadow-glow: 0 10px 30px -10px hsl(210 76% 35% / 0.4);
+    --shadow-snake: 0 8px 25px -8px hsl(142 71% 38% / 0.5);
     
     /* Animations */
     --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --sidebar-background: 0 0% 98%;
+    --sidebar-background: 220 15% 10%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-foreground: 240 5.3% 85%;
 
-    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary: 210 76% 35%;
 
     --sidebar-primary-foreground: 0 0% 98%;
 
-    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent: 220 13% 15%;
 
-    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-accent-foreground: 240 5.3% 85%;
 
-    --sidebar-border: 220 13% 91%;
+    --sidebar-border: 220 13% 18%;
 
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 210 76% 45%;
   }
 
   .dark {
@@ -134,7 +134,7 @@ All colors MUST be HSL.
   }
   
   .python-glow:hover {
-    box-shadow: 0 15px 40px -10px hsl(210 76% 41% / 0.5);
+    box-shadow: 0 15px 40px -10px hsl(210 76% 35% / 0.6);
     transform: translateY(-2px);
   }
   
