@@ -1,52 +1,32 @@
 interface DeepSeekMessage {
-  role: 'system' | 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
 }
 
 interface DeepSeekResponse {
-  id: string;
-  object: string;
-  created: number;
-  model: string;
   choices: Array<{
-    index: number;
     message: {
-      role: string;
       content: string;
     };
-    finish_reason: string;
   }>;
-  usage: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
 }
 
 class DeepSeekClient {
   private apiKey: string;
   private baseURL: string;
 
-  constructor(apiKey: string, baseURL: string = 'https://api.deepseek.com') {
-    this.apiKey = apiKey;
-    this.baseURL = baseURL;
+  constructor() {
+    this.apiKey = process.env.DEEPSEEK_API_KEY || '';
+    this.baseURL = 'https://api.deepseek.com/v1';
   }
 
-  async chat(messages: DeepSeekMessage[], options: {
-    model?: string;
-    temperature?: number;
-    max_tokens?: number;
-    stream?: boolean;
-  } = {}): Promise<DeepSeekResponse> {
-    const {
-      model = 'deepseek-coder',
-      temperature = 0.7,
-      max_tokens = 2048,
-      stream = false
-    } = options;
+  private async makeRequest(messages: DeepSeekMessage[], model: string = 'deepseek-chat'): Promise<string> {
+    if (!this.apiKey) {
+      throw new Error('DeepSeek API key not configured');
+    }
 
     try {
-      const response = await fetch(`${this.baseURL}/v1/chat/completions`, {
+      const response = await fetch(`${this.baseURL}/chat/completions`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
@@ -55,154 +35,128 @@ class DeepSeekClient {
         body: JSON.stringify({
           model,
           messages,
-          temperature,
-          max_tokens,
-          stream,
+          max_tokens: 4000,
+          temperature: 0.7,
+          stream: false,
         }),
       });
 
       if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`DeepSeek API error: ${response.status} ${error}`);
+        throw new Error(`DeepSeek API error: ${response.status} ${response.statusText}`);
       }
 
-      return await response.json();
+      const data: DeepSeekResponse = await response.json();
+      return data.choices[0]?.message?.content || 'No response from AI';
     } catch (error) {
-      console.error('DeepSeek API Error:', error);
-      throw error;
+      console.error('DeepSeek API request failed:', error);
+      throw new Error(`AI request failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
-  async analyzeCode(code: string, language: string = 'python'): Promise<string> {
-    const systemPrompt = `You are Viper, an expert Python developer and code reviewer for PyThoughts, a Python community platform. 
+  async chatWithViper(message: string, conversationHistory: DeepSeekMessage[] = []): Promise<string> {
+    const systemPrompt = `You are Viper, a friendly and knowledgeable Python programming assistant. You help developers with:
 
-Your role:
-- Analyze Python code for best practices, performance, and potential issues
-- Provide constructive feedback with specific suggestions
-- Explain concepts in a friendly, educational manner
-- Focus on Pythonic solutions and modern best practices
-- Always be helpful and encouraging
+- Code analysis and debugging
+- Best practices and design patterns
+- Performance optimization
+- Security considerations
+- Learning and explanations
 
-Code analysis guidelines:
-- Point out potential bugs or logic errors
-- Suggest performance improvements
-- Recommend more Pythonic approaches
-- Highlight security concerns if any
-- Explain complex concepts clearly
-- Provide examples when helpful
-
-Keep responses concise but thorough. Use a friendly, professional tone.`;
-
-    const messages: DeepSeekMessage[] = [
-      { role: 'system', content: systemPrompt },
-      { 
-        role: 'user', 
-        content: `Please analyze this ${language} code and provide feedback:\n\n\`\`\`${language}\n${code}\n\`\`\``
-      }
-    ];
-
-    const response = await this.chat(messages, {
-      temperature: 0.3, // Lower temperature for more consistent code analysis
-      max_tokens: 1500,
-    });
-
-    return response.choices[0]?.message?.content || 'Sorry, I could not analyze the code at this time.';
-  }
-
-  async chatWithViper(userMessage: string, conversationHistory: DeepSeekMessage[] = []): Promise<string> {
-    const systemPrompt = `You are Viper, the friendly AI assistant for PyThoughts, a Python community platform.
-
-Your personality:
-- Expert Python developer with deep knowledge of the ecosystem
-- Helpful, encouraging, and patient teacher
-- Enthusiastic about Python and programming best practices
-- Professional yet approachable in tone
-- Quick to provide practical examples and solutions
-
-Your capabilities:
-- Answer Python programming questions
-- Provide code examples and explanations
-- Review and suggest improvements to code
-- Help with debugging and problem-solving
-- Discuss Python libraries, frameworks, and tools
-- Share best practices and design patterns
-- Explain complex concepts simply
-
-Guidelines:
-- Keep responses helpful and on-topic
-- Use code examples when appropriate
-- Be encouraging to learners at all levels
-- If unsure, acknowledge limitations honestly
-- Focus on practical, actionable advice
-- Use markdown formatting for code snippets
-
-Remember: You're here to help the Python community learn and grow!`;
+Always be helpful, encouraging, and provide practical examples. Use Python code examples when relevant.`;
 
     const messages: DeepSeekMessage[] = [
       { role: 'system', content: systemPrompt },
       ...conversationHistory,
-      { role: 'user', content: userMessage }
+      { role: 'user', content: message }
     ];
 
-    const response = await this.chat(messages, {
-      temperature: 0.8, // Higher temperature for more conversational responses
-      max_tokens: 1000,
-    });
-
-    return response.choices[0]?.message?.content || 'Sorry, I encountered an error. Please try again.';
+    return this.makeRequest(messages);
   }
 
-  async generateCodeSuggestion(description: string, language: string = 'python'): Promise<string> {
-    const systemPrompt = `You are Viper, an expert Python developer. Generate clean, well-documented Python code based on user descriptions.
+  async analyzeCode(code: string, language: string = 'python'): Promise<string> {
+    const systemPrompt = `You are Viper, an expert code analyzer. Analyze the provided ${language} code and provide:
 
-Guidelines:
-- Write production-ready, Pythonic code
-- Include proper error handling where appropriate
-- Add clear comments and docstrings
-- Follow PEP 8 style guidelines
-- Use type hints when beneficial
-- Provide complete, runnable examples
-- Explain key concepts in comments
+1. **Code Quality Assessment**: Identify potential issues, bugs, or improvements
+2. **Performance Analysis**: Suggest optimizations and best practices
+3. **Security Review**: Highlight any security concerns
+4. **Style & Readability**: Suggest improvements for maintainability
+5. **Alternative Approaches**: Show better ways to achieve the same result
 
-Format your response with:
-1. Brief explanation of the approach
-2. Complete code example
-3. Usage example if applicable
-4. Any important notes or considerations`;
+Be specific, constructive, and provide code examples when helpful.`;
+
+    const userPrompt = `Please analyze this ${language} code:
+
+\`\`\`${language}
+${code}
+\`\`\`
+
+Provide a comprehensive analysis with actionable recommendations.`;
 
     const messages: DeepSeekMessage[] = [
       { role: 'system', content: systemPrompt },
-      { 
-        role: 'user', 
-        content: `Please generate ${language} code for: ${description}`
-      }
+      { role: 'user', content: userPrompt }
     ];
 
-    const response = await this.chat(messages, {
-      temperature: 0.4, // Lower temperature for more consistent code generation
-      max_tokens: 1500,
-    });
+    return this.makeRequest(messages);
+  }
 
-    return response.choices[0]?.message?.content || 'Sorry, I could not generate code for this request.';
+  async generateCodeSuggestion(description: string, language: string = 'python'): Promise<string> {
+    const systemPrompt = `You are Viper, an expert ${language} developer. Generate high-quality, production-ready code based on user descriptions.
+
+Requirements:
+- Write clean, well-documented code
+- Follow ${language} best practices and PEP standards
+- Include proper error handling
+- Add type hints where appropriate
+- Provide usage examples
+- Consider edge cases and performance
+
+Always explain your approach and any important design decisions.`;
+
+    const userPrompt = `Please generate ${language} code for: ${description}
+
+Make sure the code is production-ready with proper documentation and error handling.`;
+
+    const messages: DeepSeekMessage[] = [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ];
+
+    return this.makeRequest(messages);
+  }
+
+  async explainConcept(concept: string, language: string = 'python'): Promise<string> {
+    const systemPrompt = `You are Viper, an expert programming educator. Explain ${language} concepts in a clear, engaging way.
+
+Your explanations should:
+- Start with simple, clear definitions
+- Provide practical examples
+- Show common use cases
+- Address common misconceptions
+- Include code snippets when helpful
+- Be suitable for developers of all levels
+
+Make complex topics accessible and interesting!`;
+
+    const userPrompt = `Please explain the concept of "${concept}" in ${language}. Make it easy to understand with examples.`;
+
+    const messages: DeepSeekMessage[] = [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ];
+
+    return this.makeRequest(messages);
   }
 }
 
-// Singleton instance
-let deepSeekClient: DeepSeekClient | null = null;
+// Export singleton instance
+let deepseekClient: DeepSeekClient | null = null;
 
-export function getDeepSeekClient(): DeepSeekClient {
-  if (!deepSeekClient) {
-    const apiKey = process.env.DEEPSEEK_API_KEY;
-    const baseURL = process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com';
-    
-    if (!apiKey || apiKey === 'your-deepseek-api-key') {
-      throw new Error('DeepSeek API key not configured. Please add DEEPSEEK_API_KEY to your environment variables.');
-    }
-    
-    deepSeekClient = new DeepSeekClient(apiKey, baseURL);
+export const getDeepSeekClient = (): DeepSeekClient => {
+  if (!deepseekClient) {
+    deepseekClient = new DeepSeekClient();
   }
-  
-  return deepSeekClient;
-}
+  return deepseekClient;
+};
 
-export type { DeepSeekMessage, DeepSeekResponse };
+export default DeepSeekClient;

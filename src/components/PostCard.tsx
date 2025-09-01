@@ -86,9 +86,13 @@ export const PostCard = ({
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10 ring-2 ring-python-blue/20">
-              <AvatarImage src={avatar || snakeMascot} alt={author} />
+              {avatar ? (
+                <AvatarImage src={avatar} alt={`${author}'s avatar`} />
+              ) : (
+                <AvatarImage src={snakeMascot} alt="Default avatar" />
+              )}
               <AvatarFallback className="bg-gradient-to-r from-python-blue to-python-blue/80 text-white">
-                {author?.[0] || 'U'}
+                {author?.[0]?.toUpperCase() || 'U'}
               </AvatarFallback>
             </Avatar>
             <div>
@@ -103,7 +107,7 @@ export const PostCard = ({
       </CardHeader>
       
       <CardContent className="space-y-3">
-        <p className="text-sm leading-relaxed">&gt;_ {content} &lt;</p>
+        <p className="text-sm leading-relaxed">{content}</p>
         
         {code && (
           <div className="bg-muted/50 rounded-lg p-3 border-l-4 border-python-blue">
